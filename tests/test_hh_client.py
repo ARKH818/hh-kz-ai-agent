@@ -409,11 +409,11 @@ def test_read_vacancy_collects_safe_company_url(tmp_path: Path) -> None:
 
     result = asyncio.run(
         client.read_vacancy(
-            VacancySummary("job-1", "Developer", "https://hh.ru/vacancy/1", "Python")
+            VacancySummary("job-1", "Developer", "https://hh.kz/vacancy/1", "Python")
         )
     )
 
-    assert result.company_url == "https://hh.ru/employer/123"
+    assert result.company_url == "https://hh.kz/employer/123"
 
 
 def test_read_company_details_parses_rating_and_review_count(tmp_path: Path) -> None:
@@ -432,7 +432,7 @@ def test_read_company_details_parses_rating_and_review_count(tmp_path: Path) -> 
         sleep=lambda _: asyncio.sleep(0),
     )
 
-    result = asyncio.run(client.read_company_details("https://hh.ru/employer/123"))
+    result = asyncio.run(client.read_company_details("https://hh.kz/employer/123"))
 
     assert result.rating == 3.4
     assert result.reviews_count == 14

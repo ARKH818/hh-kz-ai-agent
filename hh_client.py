@@ -18,6 +18,8 @@ from approval import ApplicationPermission, ApprovalGuard
 from config import Settings
 from database import Database, VacancyStatus
 
+HH_BASE_URL = "https://hh.kz"
+
 
 logger = logging.getLogger(__name__)
 
@@ -88,11 +90,11 @@ def _company_url(vacancy_url: str, href: str | None) -> str:
     parsed = urlparse(urljoin(vacancy_url, href))
     if (
         parsed.scheme != "https"
-        or parsed.hostname not in {"hh.ru", "www.hh.ru"}
+        or parsed.hostname not in {"hh.kz", "www.hh.kz"}
         or re.fullmatch(r"/employer/\d+/?", parsed.path) is None
     ):
         return ""
-    return f"https://hh.ru{parsed.path.rstrip('/')}"
+    return f"{HH_BASE_URL}{parsed.path.rstrip('/')}"
 
 
 
@@ -142,7 +144,7 @@ class HHClient:
             for attempt in range(1, 4):
                 try:
                     await page.goto(
-                        "https://hh.ru/applicant/resumes",
+                        f"{HH_BASE_URL}/applicant/resumes",
                         wait_until="domcontentloaded",
                         timeout=90_000,
                     )
@@ -182,7 +184,7 @@ class HHClient:
                             "👉 Войдите на HH.ru в браузере и затем нажмите ENTER здесь: ",
                         )
                         await page.goto(
-                            "https://hh.ru/applicant/resumes",
+                            f"{HH_BASE_URL}/applicant/resumes",
                             wait_until="domcontentloaded",
                             timeout=90_000,
                         )
@@ -243,7 +245,7 @@ class HHClient:
                     params["experience"] = list(experience_filters)
                 await self._delay()
                 await page.goto(
-                    f"https://hh.ru/search/vacancy?{urlencode(params, doseq=True)}",
+                    f"{HH_BASE_URL}/search/vacancy?{urlencode(params, doseq=True)}",
                     wait_until="domcontentloaded",
                     timeout=30_000,
                 )
@@ -352,7 +354,7 @@ class HHClient:
                     )
 
     async def read_company_details(self, company_url: str) -> CompanyDetails:
-        company_url = _company_url("https://hh.ru/", company_url)
+        company_url = _company_url(f"{HH_BASE_URL}/", company_url)
         if not company_url:
             return CompanyDetails()
         page = None
@@ -551,7 +553,7 @@ class HHClient:
         try:
             await self._delay()
             await page.goto(
-                "https://hh.ru/applicant/negotiations",
+                f"{HH_BASE_URL}/applicant/negotiations",
                 wait_until="domcontentloaded",
                 timeout=30_000,
             )
@@ -566,7 +568,7 @@ class HHClient:
                 message_id = f"{href}:{title}"
                 if href and not self.database.is_message_processed(message_id):
                     self.database.add_processed_message(message_id, href, title)
-                    await notifier(f"New unread HH message for: {title}\nhttps://hh.ru{href}")
+                    await notifier(f"New unread HH message for: {title}\n{HH_BASE_URL}{href}")
         except Exception as exc:
             logger.error("message_check_failed error=%s", exc)
         finally:
